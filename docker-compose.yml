@@ -1,0 +1,39 @@
+
+services:
+  app_instance_a:
+    build: .
+    environment:
+      - APP_VERSION=2.0.0-Upgrade
+      - APP_ENV=Production
+    # DevOps Task: Check the /health route every 5 seconds
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  app_instance_b:
+    build: .
+    environment:
+      - APP_VERSION=2.0.0-Upgrade
+      - APP_ENV=Production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app_instance_a:
+        condition: service_healthy
+      app_instance_b:
+        condition: service_healthy
+
